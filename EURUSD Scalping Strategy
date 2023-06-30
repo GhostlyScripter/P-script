@@ -1,0 +1,39 @@
+//@version=5
+strategy("My Strategy", overlay=true)
+
+// Strategy Parameters
+accountSize = 1000
+riskPercentage = 0.01
+stopLossPips = 5
+takeProfitPips = 10
+trailingStopPips = 10
+trailingStopActivationPips = 10
+trailingStopOffsetPips = 10
+spreadPips = 5
+leverage = 1
+lotSize = 0.01
+
+// Calculate position size based on risk percentage
+positionSize = strategy.equity * riskPercentage / (stopLossPips * syminfo.mintick * lotSize * leverage)
+
+// Calculate stop loss and take profit levels
+stopLoss = close - stopLossPips * syminfo.mintick
+takeProfit = close + takeProfitPips * syminfo.mintick
+
+// Calculate trailing stop levels
+trailingStopActivation = close + trailingStopActivationPips * syminfo.mintick
+trailingStopOffset = trailingStopPips * syminfo.mintick
+
+// Check if a long trade condition is met
+longCondition = ta.crossover(ta.sma(close, 50), ta.sma(close, 200))
+if longCondition
+    strategy.entry("Buy", strategy.long, qty = positionSize, stop = high + spreadPips * syminfo.mintick)
+    strategy.exit("Sell", "Buy", stop = stopLoss, limit = takeProfit, trail_price = trailingStopActivation, trail_offset = trailingStopOffset)
+
+// Check if a short trade condition is met
+shortCondition = ta.crossunder(ta.sma(close, 50), ta.sma(close, 200))
+if shortCondition
+    strategy.entry("Sell", strategy.short, qty = positionSize, stop = low - spreadPips * syminfo.mintick)
+    strategy.exit("Cover", "Sell", stop = stopLoss, limit = takeProfit, trail_price = trailingStopActivation, trail_offset = trailingStopOffset)
+
+
